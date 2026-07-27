@@ -43,4 +43,4 @@ else:
     if not closed.empty:
         closed = closed.assign(running_pnl=closed["pnl"].cumsum())
         st.line_chart(closed.set_index("closed_at")["running_pnl"])
-    st.dataframe(df.sort_values("opened_at", ascending=False), use_container_width=True)
+    st.dataframe(df.sort_values("opened_at", ascending=False), width="stretch")
