@@ -13,7 +13,7 @@ bar must close back in the breakout direction AND its volume must exceed
 RETEST_VOLUME_MULTIPLIER times the rolling average volume of the preceding bars.
 """
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 
 import config
 import db
@@ -34,6 +34,12 @@ def _as_datetime(ts):
         return ts.to_pydatetime()
     if isinstance(ts, datetime):
         return ts
+    if isinstance(ts, (int, float)):
+        # alpaca-trade-api's live Bar entity has a bug where it fails to convert
+        # the 'timestamp' field (only its legacy single-letter 't' key is handled),
+        # so raw WebSocket bars hand back a nanosecond epoch integer instead of a
+        # pandas.Timestamp. Trade ticks are unaffected -- only Bar objects hit this.
+        return datetime.fromtimestamp(ts / 1e9, tz=timezone.utc)
     return datetime.fromisoformat(str(ts))
 
 

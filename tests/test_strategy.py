@@ -135,3 +135,14 @@ def test_no_new_breakout_after_cutoff(strategy, fake_execution):
     strategy.on_bar(late_bar)
     assert strategy.phase == Phase.DONE_FOR_DAY
     fake_execution.submit_bracket_order.assert_not_called()
+
+
+def test_handles_raw_nanosecond_epoch_timestamp(strategy):
+    # Regression test: alpaca-trade-api's live Bar entity has a bug where it
+    # hands back a raw nanosecond-epoch int instead of a pandas.Timestamp for
+    # the 'timestamp' field (see strategy._as_datetime). Bars must not crash.
+    nanosecond_epoch = int(DAY1_930_UTC.timestamp() * 1e9)
+    raw_bar = SimpleNamespace(high=101.0, low=99.0, close=100.0, volume=100, timestamp=nanosecond_epoch)
+    strategy.on_bar(raw_bar)
+    assert strategy.phase == Phase.MARKING
+    assert len(strategy._bars_today) == 1
