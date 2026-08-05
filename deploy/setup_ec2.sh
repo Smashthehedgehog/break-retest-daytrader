@@ -2,8 +2,13 @@
 # Deployment walkthrough for break-retest-daytrader on a fresh Ubuntu 24.04 LTS EC2
 # instance (t3.micro, us-east-1). Run as ubuntu after SSH'ing in.
 #
+# Precondition: this repo is already cloned to $HOME/break-retest-daytrader (that's
+# how you got this script) and you're running this from inside that checkout, e.g.:
+#   git clone https://github.com/Smashthehedgehog/break-retest-daytrader.git
+#   cd break-retest-daytrader && bash deploy/setup_ec2.sh
+#
 # This is meant to be read and run step-by-step, NOT piped into bash blindly -- steps
-# 6-7 are interactive (you paste secrets / unit file contents into an editor). See
+# 5-6 are interactive (you paste secrets / unit file contents into an editor). See
 # README.md's "Deploying to AWS EC2" section for the full walkthrough and context.
 
 set -euo pipefail
@@ -11,23 +16,25 @@ set -euo pipefail
 REPO_DIR="$HOME/break-retest-daytrader"
 ENV_FILE="/etc/break-retest-daytrader.env"
 
+if [ ! -d "$REPO_DIR/.git" ]; then
+    echo "Expected the repo at $REPO_DIR -- clone it there first (see precondition above)." >&2
+    exit 1
+fi
+cd "$REPO_DIR"
+
 # --- 1. OS packages ------------------------------------------------------------
 # Ubuntu 24.04 LTS ships Python 3.12 by default, matching what this project is
 # tested on -- no PPA needed. python3-venv is a separate package on Debian/Ubuntu.
 sudo apt-get update -y
-sudo apt-get install -y git python3 python3-venv python3-pip
+sudo apt-get install -y python3 python3-venv python3-pip
 PYBIN=python3
 
-# --- 2. Clone the repo (public -- HTTPS, no deploy key needed) -----------------
-git clone https://github.com/Smashthehedgehog/break-retest-daytrader.git "$REPO_DIR"
-cd "$REPO_DIR"
-
-# --- 3. Fresh venv + dependencies -----------------------------------------------
+# --- 2. Fresh venv + dependencies -----------------------------------------------
 "$PYBIN" -m venv .venv
 .venv/bin/pip install --upgrade pip
 .venv/bin/pip install -r requirements.txt
 
-# --- 4. Swapfile safety net (t3.micro has only 1GiB RAM) ------------------------
+# --- 3. Swapfile safety net (t3.micro has only 1GiB RAM) ------------------------
 if [ ! -f /swapfile ]; then
     sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
     sudo chmod 600 /swapfile
@@ -36,14 +43,14 @@ if [ ! -f /swapfile ]; then
     echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
 fi
 
-# --- 5. Suppress Streamlit's first-run interactive prompt -----------------------
+# --- 4. Suppress Streamlit's first-run interactive prompt -----------------------
 mkdir -p "$HOME/.streamlit"
 cat > "$HOME/.streamlit/credentials.toml" <<'EOF'
 [general]
 email = ""
 EOF
 
-# --- 6. Secrets file (root-owned -- systemd/PID 1 reads it as root before ------
+# --- 5. Secrets file (root-owned -- systemd/PID 1 reads it as root before ------
 #        dropping privileges, so the service user never needs read access) ------
 echo ""
 echo "Now create $ENV_FILE with your own values. Example content (see .env.example):"
@@ -68,11 +75,11 @@ read -rp "Press Enter once $ENV_FILE is created... "
 sudo chown root:root "$ENV_FILE"
 sudo chmod 600 "$ENV_FILE"
 
-# --- 7. Install systemd units ----------------------------------------------------
+# --- 6. Install systemd units ----------------------------------------------------
 sudo cp "$REPO_DIR/deploy/break-retest-bot.service" /etc/systemd/system/
 sudo cp "$REPO_DIR/deploy/break-retest-dashboard.service" /etc/systemd/system/
 
-# --- 8. Activate -------------------------------------------------------------------
+# --- 7. Activate -------------------------------------------------------------------
 sudo systemctl daemon-reload
 sudo systemctl enable --now break-retest-bot.service
 sudo systemctl enable --now break-retest-dashboard.service

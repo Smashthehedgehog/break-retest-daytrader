@@ -129,24 +129,30 @@ market hours. To run continuously on a server instead:
    `t3.micro`, region `us-east-1` (lowest latency to Alpaca's data infra). Security
    group: allow inbound SSH (port 22) from your own IP only — **do not open port 8501**,
    the dashboard has no built-in authentication and must never be exposed publicly.
-2. SSH in and walk through [`deploy/setup_ec2.sh`](deploy/setup_ec2.sh) step by step
-   (it's meant to be read, not piped blindly into bash — a couple of steps are
-   interactive). It clones this repo, sets up a venv, installs
-   [`deploy/break-retest-bot.service`](deploy/break-retest-bot.service) and
-   [`deploy/break-retest-dashboard.service`](deploy/break-retest-dashboard.service)
+2. SSH in and clone the repo to your home directory (needed before you can run the
+   script below -- it lives in this repo):
+   ```bash
+   sudo apt-get update && sudo apt-get install -y git
+   git clone https://github.com/Smashthehedgehog/break-retest-daytrader.git
+   cd break-retest-daytrader
+   ```
+3. Walk through [`deploy/setup_ec2.sh`](deploy/setup_ec2.sh) step by step (it's meant
+   to be read, not piped blindly into bash — a couple of steps are interactive). It
+   sets up a venv, installs [`deploy/break-retest-bot.service`](deploy/break-retest-bot.service)
+   and [`deploy/break-retest-dashboard.service`](deploy/break-retest-dashboard.service)
    as systemd units (auto-restart, journald logging), and creates a root-only secrets
    file at `/etc/break-retest-daytrader.env` (same variables as `.env.example`, plus an
    explicit absolute `DB_PATH` so both services agree on the SQLite file location).
-3. Verify: `sudo systemctl status break-retest-bot.service break-retest-dashboard.service`
+4. Verify: `sudo systemctl status break-retest-bot.service break-retest-dashboard.service`
    should show both `active (running)`; `sudo journalctl -u break-retest-bot.service -f`
    should show the startup banner and, during market hours, a `1-Min Bar Closed` line
    every minute.
-4. **View the dashboard via SSH tunnel only** — never open 8501 in the security group:
+5. **View the dashboard via SSH tunnel only** — never open 8501 in the security group:
    ```bash
    ssh -L 8501:localhost:8501 ubuntu@<instance-public-ip>
    ```
    then open `http://localhost:8501` in your local browser.
-5. Leave `TRADING_MODE=paper` for the entire initial validation period on the server,
+6. Leave `TRADING_MODE=paper` for the entire initial validation period on the server,
    exactly as recommended for local use, before ever considering live trading.
 
 **Cost note:** unlike your own PC, this instance bills continuously (~$7-8/mo for a
