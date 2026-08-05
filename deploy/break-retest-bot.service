@@ -1,0 +1,21 @@
+[Unit]
+Description=Break-and-Retest Day Trading Algo (main_algo.py)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/break-retest-daytrader
+EnvironmentFile=-/etc/break-retest-daytrader.env
+ExecStartPre=/home/ec2-user/break-retest-daytrader/.venv/bin/python scripts/init_db.py
+ExecStart=/home/ec2-user/break-retest-daytrader/.venv/bin/python main_algo.py
+Restart=always
+RestartSec=30
+TimeoutStopSec=60
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

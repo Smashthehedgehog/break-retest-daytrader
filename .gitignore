@@ -8,3 +8,4 @@ venv/
 *.db
 *.db-journal
 .streamlit/
+alpaca_recovery.txt
