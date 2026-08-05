@@ -5,11 +5,11 @@ Wants=network.target
 
 [Service]
 Type=simple
-User=ec2-user
-Group=ec2-user
-WorkingDirectory=/home/ec2-user/break-retest-daytrader
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/break-retest-daytrader
 EnvironmentFile=-/etc/break-retest-daytrader.env
-ExecStart=/home/ec2-user/break-retest-daytrader/.venv/bin/streamlit run dashboard.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
+ExecStart=/home/ubuntu/break-retest-daytrader/.venv/bin/streamlit run dashboard.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
 Restart=always
 RestartSec=10
 TimeoutStopSec=30

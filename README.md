@@ -125,7 +125,7 @@ paths, the one-trade-per-day cap, the end-of-day cutoff, and day rollover).
 Running this on your own machine only trades while it's on, awake, and online during
 market hours. To run continuously on a server instead:
 
-1. **Provision an EC2 instance yourself** (not covered here): Amazon Linux 2023,
+1. **Provision an EC2 instance yourself** (not covered here): Ubuntu 24.04 LTS,
    `t3.micro`, region `us-east-1` (lowest latency to Alpaca's data infra). Security
    group: allow inbound SSH (port 22) from your own IP only — **do not open port 8501**,
    the dashboard has no built-in authentication and must never be exposed publicly.
@@ -143,7 +143,7 @@ market hours. To run continuously on a server instead:
    every minute.
 4. **View the dashboard via SSH tunnel only** — never open 8501 in the security group:
    ```bash
-   ssh -L 8501:localhost:8501 ec2-user@<instance-public-ip>
+   ssh -L 8501:localhost:8501 ubuntu@<instance-public-ip>
    ```
    then open `http://localhost:8501` in your local browser.
 5. Leave `TRADING_MODE=paper` for the entire initial validation period on the server,
