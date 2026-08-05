@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Deployment walkthrough for break-retest-daytrader on a fresh Amazon Linux 2023 EC2
-# instance (t3.micro, us-east-1). Run as ec2-user after SSH'ing in.
+# Deployment walkthrough for break-retest-daytrader on a fresh Ubuntu 24.04 LTS EC2
+# instance (t3.micro, us-east-1). Run as ubuntu after SSH'ing in.
 #
 # This is meant to be read and run step-by-step, NOT piped into bash blindly -- steps
 # 6-7 are interactive (you paste secrets / unit file contents into an editor). See
@@ -12,16 +12,11 @@ REPO_DIR="$HOME/break-retest-daytrader"
 ENV_FILE="/etc/break-retest-daytrader.env"
 
 # --- 1. OS packages ------------------------------------------------------------
-sudo dnf update -y
-sudo dnf install -y git
-
-if sudo dnf list available python3.12 &>/dev/null; then
-    sudo dnf install -y python3.12
-    PYBIN=python3.12
-else
-    sudo dnf install -y python3.11
-    PYBIN=python3.11
-fi
+# Ubuntu 24.04 LTS ships Python 3.12 by default, matching what this project is
+# tested on -- no PPA needed. python3-venv is a separate package on Debian/Ubuntu.
+sudo apt-get update -y
+sudo apt-get install -y git python3 python3-venv python3-pip
+PYBIN=python3
 
 # --- 2. Clone the repo (public -- HTTPS, no deploy key needed) -----------------
 git clone https://github.com/Smashthehedgehog/break-retest-daytrader.git "$REPO_DIR"
@@ -63,7 +58,7 @@ BASE_RISK=50.00
 REWARD_RATIO=2.0
 PROFIT_BUFFER_TARGET=200.00
 SCALED_RISK=100.00
-DB_PATH=/home/ec2-user/break-retest-daytrader/trade_history.db
+DB_PATH=/home/ubuntu/break-retest-daytrader/trade_history.db
 EOF
 echo ""
 echo "Run:"
@@ -88,5 +83,5 @@ echo "  sudo systemctl status break-retest-bot.service break-retest-dashboard.se
 echo "  sudo journalctl -u break-retest-bot.service -f"
 echo ""
 echo "View the dashboard from your local machine via SSH tunnel (never expose 8501 publicly):"
-echo "  ssh -L 8501:localhost:8501 ec2-user@<this-instance-public-ip>"
+echo "  ssh -L 8501:localhost:8501 ubuntu@<this-instance-public-ip>"
 echo "  then open http://localhost:8501 locally"
